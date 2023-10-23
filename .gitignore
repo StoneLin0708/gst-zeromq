@@ -56,7 +56,11 @@ Build
 *.sdf
 *.opensdf
 *.DS_Store
+*.swp
 
 /test-driver
 *.trs
 *.log
+
+/build
+/.vscode
