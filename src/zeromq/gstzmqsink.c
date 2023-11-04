@@ -200,17 +200,18 @@ gst_zmq_sink_render (GstBaseSink * basesink, GstBuffer * buffer)
 
   if (map.size > 0 && map.data != NULL) {
     zmq_msg_t msg;
-    int rc = zmq_msg_init_size (&msg, map.size);
+    int rc = zmq_msg_init_size (&msg, map.size + 8);
     if (rc) {
       GST_ELEMENT_ERROR (sink, RESOURCE, FAILED,
           ("zmq_msg_init_size() failed with error code %d [%s]", errno,
               zmq_strerror (errno)), NULL);
       retval = GST_FLOW_ERROR;
     } else {
-      memcpy (zmq_msg_data (&msg), map.data, map.size);
+      ((uint64_t*)zmq_msg_data (&msg))[0] = buffer->pts;
+      memcpy (((char*)zmq_msg_data (&msg)) + 8, map.data, map.size);
 
       rc = zmq_msg_send (&msg, sink->socket, 0);
-      if (rc != map.size) {
+      if (rc != map.size + 8) {
         GST_ELEMENT_ERROR (sink, RESOURCE, WRITE,
             ("zmq_msg_send() failed with error code %d [%s]", errno,
                 zmq_strerror (errno)), NULL);

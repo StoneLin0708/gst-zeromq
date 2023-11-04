@@ -212,12 +212,15 @@ gst_zmq_src_create (GstPushSrc * psrc, GstBuffer ** outbuf)
   }
   size_t msg_size = zmq_msg_size (&msg);
 
-  *outbuf = gst_buffer_new_and_alloc (msg_size);
+  *outbuf = gst_buffer_new_and_alloc (msg_size - 8);
+
   gst_buffer_map (*outbuf, &map, GST_MAP_READWRITE);
 
-  memcpy (map.data, zmq_msg_data (&msg), msg_size);
-
+  memcpy (map.data, ((char*)zmq_msg_data(&msg)) + 8, msg_size - 8);
   gst_buffer_unmap (*outbuf, &map);
+
+  guint64 pts = *((guint64*)zmq_msg_data(&msg));
+  (*outbuf)->pts = pts;
 
   zmq_msg_close (&msg);
 
